@@ -1,0 +1,24 @@
+vrb is meant to bring the ease of use of VMware's PowerCLI to unix/ruby people by way of exposing a friendlier set of actions and information than just using rbvmomi on its own.
+
+== Disclaimer
+
+I am not a ruby developer, I just play one on Github. I am a systems/virtualization/devops engineer with much more of a scripting background. Besides the obvious goal of creating vrb to make my own life easier at work, I am also using this project to attempt to elevate my understanding of ruby (and frankly, OOP in general).
+
+Patience and grace are requested.
+
+== Usage
+
+  >> my_vcenter_connection = Vrb::Vcenter.new(vcenter_name, username, password)
+   => Vrb::Vcenter(vcenter_name)
+  >> my_vcenter_connection.list_datacenters
+   => ["Seattle", "Chicago", "London"]
+  >> my_datacenter = my_vcenter_connection.get_datacenter("Seattle")
+   => Vrb::Datacenter(Seattle)
+
+== Todos
+
+* Add more info than just inventory to cluster/host/vm objects (drs state, tools info, virtual adapters, etc)
+* Should that info be exposed as attributes (or whatever it's called?) (ie my_vm[:toolsstatus] )
+* Add actions (maintenance mode, power on/off, clone, etc)
+* Figure out how to set up ruby module directory structure (maybe package as gem?)
+* Come up with more todos
