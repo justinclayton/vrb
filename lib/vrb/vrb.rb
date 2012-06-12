@@ -45,7 +45,7 @@ module Vrb
       mobs.collect { |cluster_mob| cluster_mob.name }
     end
   end
-  
+
 
   class Cluster
     
@@ -66,6 +66,16 @@ module Vrb
       mobs = @mob.host
       mobs.collect { |mob| mob.name }
     end
+    
+    def get_vm(name)
+      VM.new(@mob, name) or fail "Sorry!"
+    end
+    
+    def list_vms
+      mobs = @mob.resourcePool.vm + @mob.resourcePool.resourcePool.collect { |rp| rp.vm }.flatten
+      mobs.collect { |mob| mob.name }
+    end
+    
   end
   
   class Host
@@ -90,12 +100,22 @@ module Vrb
   end
   
   class VM
+    
+    attr_reader :mob, :os, :ip, :tools_status, :host
+    
     def initialize(parent_mob, name)
       mobs = case parent_mob.class.to_s
-        when "HostSystem" then parent_mob.vm
-        when "ClusterComputeResource" then parent_mob.resourcePool.vm
+        when "HostSystem"
+          parent_mob.vm
+        when "ClusterComputeResource"
+          parent_mob.resourcePool.vm + parent_mob.resourcePool.resourcePool.collect { |rp| rp.vm }.flatten
       end
       @mob = mobs.find { |mob| mob.name == name }
+      
+      @os = @mob.summary.guest.guestFullName
+      @ip = @mob.guest.ipAddress
+      @tools_status = @mob.guest.toolsStatus
+      @host = @mob.runtime.host.name
     end
     
     def inspect
