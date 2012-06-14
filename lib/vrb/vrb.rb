@@ -1,11 +1,23 @@
 module Vrb
   
   require 'rbvmomi'
+  require 'fileutils'
+  require 'yaml'
+  
   VIM = RbVmomi::VIM
+  
+  VCENTER_CONFIG_FILE = '~/.fog'
+  file = File.open(File.expand_path(VCENTER_CONFIG_FILE)).read
+  config = YAML.load(file)[:default]
+  VCENTER_SERVER = config[:vsphere_server]
+  VCENTER_USERNAME = config[:vsphere_username]
+  VCENTER_PASSWORD = config[:vsphere_password]
 
   class Vcenter
+
+    attr_reader :mob
     
-    def initialize(host, user, password)
+    def initialize(host = VCENTER_SERVER, user = VCENTER_USERNAME, password = VCENTER_PASSWORD)
       @mob = VIM.connect  host: host,
                           user: user,
                           password: password,
@@ -16,8 +28,15 @@ module Vrb
       return "#{self.class}(#{@mob.host})"
     end
   
+    def get_vm(name)
+    end
+  
+    def get_host(name)
+    end
+  
     def get_datacenter(name)
-      Datacenter.new(@mob, name) or fail "Sorry!"
+      dc_mob = @mob.serviceInstance.find_datacenter(name) or fail "Sorry!"
+      Datacenter.new(@mob, dc_mob)
     end
     
     def list_datacenters
@@ -28,8 +47,10 @@ module Vrb
 
   class Datacenter
     
-    def initialize(parent_mob, name)
-      @mob = parent_mob.serviceInstance.find_datacenter(name)
+    attr_reader :mob
+    
+    def initialize(parent_mob, self_mob)
+      @mob = self_mob
     end
         
     def inspect
