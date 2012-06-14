@@ -13,6 +13,17 @@ module Vrb
   VCENTER_USERNAME = config[:vsphere_username]
   VCENTER_PASSWORD = config[:vsphere_password]
 
+  class VrbObject
+    def initialize(parent_mob, self_mob)
+      @mob = self_mob
+      @parent_mob = parent_mob
+    end
+    
+    def inspect
+      return "#{self.class}(#{@mob.name})"
+    end
+  end
+  
   class Vcenter
 
     attr_reader :mob
@@ -23,15 +34,17 @@ module Vrb
                           password: password,
                           insecure: true
     end
-
+    
     def inspect
       return "#{self.class}(#{@mob.host})"
     end
   
     def get_vm(name)
+      puts "Not implemented yet"
     end
   
     def get_host(name)
+      puts "Not implemented yet"
     end
   
     def get_datacenter(name)
@@ -45,71 +58,69 @@ module Vrb
     end
   end
 
-  class Datacenter
+  class Datacenter < VrbObject
     
-    attr_reader :mob
-    
-    def initialize(parent_mob, self_mob)
-      @mob = self_mob
-    end
-        
-    def inspect
-      return "#{self.class}(#{@mob.name})"
-    end
+    attr_reader :mob, :parent_mob
         
     def get_cluster(name)
-      Cluster.new(@mob, name) or fail "Sorry!"
+      mobs = self.list_clusters(return_as_mobs = true)
+      cl_mob = mobs.find { |mob| mob.name == name } or fail "Sorry!"
+      Cluster.new(@mob, cl_mob)
     end
     
-    def list_clusters
+    def list_clusters(return_as_mobs = false)
       mobs = @mob.hostFolder.children.grep(VIM::ClusterComputeResource)
-      mobs.collect { |cluster_mob| cluster_mob.name }
+      if return_as_mobs == true
+        return mobs
+      else
+        return mobs.collect { |mob| mob.name }
+      end
     end
+    
   end
 
 
-  class Cluster
+  class Cluster < VrbObject
     
-    def initialize(parent_mob, name)
-      mobs = parent_mob.hostFolder.children.grep(VIM::ClusterComputeResource)
-      @mob = mobs.find { |mob| mob.name == name }
-    end
+    attr_reader :mob, :parent_mob
         
-    def inspect
-      return "#{self.class}(#{@mob.name})"
-    end
-    
     def get_host(name)
-      Host.new(@mob, name) or fail "Sorry!"
+      mobs = self.list_hosts(return_as_mobs = true)
+      host_mob = mobs.find { |mob| mob.name == name } or fail "Sorry!"
+      Host.new(@mob, host_mob)
     end
     
-    def list_hosts
+    def list_hosts(return_as_mobs = false)
       mobs = @mob.host
-      mobs.collect { |mob| mob.name }
+      if return_as_mobs == true
+        return mobs
+      else
+        return mobs.collect { |mob| mob.name }
+      end
     end
     
     def get_vm(name)
-      VM.new(@mob, name) or fail "Sorry!"
+      mobs = self.list_vms(return_as_mobs = true)
+      vm_mob = mobs.find { |mob| mob.name == name } or fail "Sorry!"
+      VM.new(@mob, vm_mob)
     end
     
-    def list_vms
+    # for some reason, finding vms this at the cluster 
+    def list_vms(return_as_mobs = false)
       mobs = @mob.resourcePool.vm + @mob.resourcePool.resourcePool.collect { |rp| rp.vm }.flatten
-      mobs.collect { |mob| mob.name }
+      if return_as_mobs == true
+        return mobs
+      else
+        return mobs.collect { |mob| mob.name }
+      end
     end
     
   end
   
-  class Host
+  class Host < VrbObject
     
-    def initialize(parent_mob, name)
-      mobs = parent_mob.host
-      @mob = mobs.find { |mob| mob.name == name }
-    end
+    attr_reader :mob, :parent_mob
         
-    def inspect
-      return "#{self.class}(#{@mob.name})"
-    end
-    
     def get_vm(name)
       VM.new(@mob, name) or fail "Sorry!"
     end
@@ -120,29 +131,21 @@ module Vrb
     end
   end
   
-  class VM
+  class VM < VrbObject
     
-    attr_reader :mob, :os, :ip, :tools_status, :host
+    attr_reader :mob, :os, :ip, :tools_status, :host, :is_a_template
     
-    def initialize(parent_mob, name)
-      mobs = case parent_mob.class.to_s
-        when "HostSystem"
-          parent_mob.vm
-        when "ClusterComputeResource"
-          parent_mob.resourcePool.vm + parent_mob.resourcePool.resourcePool.collect { |rp| rp.vm }.flatten
-      end
-      @mob = mobs.find { |mob| mob.name == name }
-      
+    def initialize(parent_mob, self_mob)
+      @mob = self_mob
+      @parent_mob = parent_mob
+            
       @os = @mob.summary.guest.guestFullName
       @ip = @mob.guest.ipAddress
       @tools_status = @mob.guest.toolsStatus
       @host = @mob.runtime.host.name
+      @is_a_template = @mob.summary.config.template
     end
-    
-    def inspect
-      return "#{self.class}(#{@mob.name})"
-    end
-    
+        
   end
   
 end
