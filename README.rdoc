@@ -18,7 +18,5 @@ Patience and grace are requested.
 == Todos
 
 * Add more info than just inventory to cluster/host/vm objects (drs state, tools info, virtual adapters, etc)
-* Should that info be exposed as attributes (or whatever it's called?) (ie my_vm[:toolsstatus] )
 * Add actions (maintenance mode, power on/off, clone, etc)
-* Figure out how to set up ruby module directory structure (maybe package as gem?)
 * Come up with more todos
