@@ -10,5 +10,5 @@ module Vrb
       return "#{self.class}(#{@mob.name})"
     end
   end
-  
+
 end

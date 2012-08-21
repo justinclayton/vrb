@@ -1,0 +1,16 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    builder (3.0.0)
+    nokogiri (1.5.5)
+    rbvmomi (1.5.1)
+      builder
+      nokogiri (>= 1.4.1)
+      trollop
+    trollop (1.16.2)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  rbvmomi
