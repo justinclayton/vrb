@@ -4,19 +4,44 @@ vrb is meant to bring the ease of use of VMware's PowerCLI to unix/ruby people b
 
 I am not a ruby developer, I just play one on Github. I am a systems/virtualization/devops engineer with much more of a scripting background. Besides the obvious goal of creating vrb to make my own life easier at work, I am also using this project to attempt to elevate my understanding of ruby (and frankly, OOP in general).
 
-Patience and grace are requested.
+Patience and grace are requested, as well as your contributions.
 
 == Usage
 
-  >> my_vcenter_connection = Vrb::Vcenter.new(vcenter_name, username, password)
+  >> vc = Vrb::Vcenter.new(vcenter_name, username, password)
    => Vrb::Vcenter(vcenter_name)
-  >> my_vcenter_connection.list_datacenters
-   => ["Seattle", "Chicago", "London"]
-  >> my_datacenter = my_vcenter_connection.get_datacenter("Seattle")
+  >> vc.list_datacenters
+   => ['Seattle', 'Chicago', 'London']
+  >> dc = vc.get_datacenter('Seattle')
    => Vrb::Datacenter(Seattle)
+  >> cl = dc.get_cluster 'Prod'
+   => Vrb::Cluster(Prod)
+  >> host = cl.get_host 'host1.domain.tld'
+   => Vrb::Host(host1.domain.tld)
+  >> vm = host.get_vm 'myvm'
+   => Vrb::VM(myvm)
+  >> vm.os
+   => 'CentOS 4/5/6'
+  >> vm.ip
+   => '10.0.1.2'
+
+== Notable features
+* Friendly names everywhere you look (or inspect)
+* Clone a VM using an existing vCenter customization specification! Even pass IPs!
+* Change network labels on an existing VM
+* If you're already using fog, Vrb::Vcenter.new will recognize and pick up your ~/.fog file
+* Mix and match Vrb and RbVmomi methods! Just call .mob on any Vrb object to get direct access to the RbVmomi managed object reference
+* Access a VM direct from vCenter without traversing the hierarchy: <code>vc.get_vm_by_path('Seattle/vm/Folder1/myvm'</code>
+* View hard to get to data like vNIC information as simple ivars
+
+== Known Issues
+* vNIC-related actions currently only support the VMware vDS. Sorry, that's mostly what I use at work. Support for sVS networks will be added eventually.
 
 == Todos
-
-* Add more info than just inventory to cluster/host/vm objects (drs state, tools info, virtual adapters, etc)
-* Add actions (maintenance mode, power on/off, clone, etc)
-* Come up with more todos
+* VM NIC information needs cleanup
+* Add more info to cluster/host/vm objects. some ideas:
+  - HA/DRS state
+  - active alarms
+* Add more common actions. some ideas:
+  - maintenance mode
+  - power on/off
