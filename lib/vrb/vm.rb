@@ -33,7 +33,7 @@ module Vrb
         @ip = @mob.guest.ipAddress
         @host = @mob.runtime.host.name
         @is_a_template = @mob.summary.config.template
-      rescue Exception => e
+      rescue
         @os = nil
         @ip = nil
         @host = nil
@@ -74,6 +74,35 @@ module Vrb
       spec.deviceChange = [dev_change]
 
       @mob.ReconfigVM_Task(:spec => spec).wait_for_completion
+    end
+
+    def clone( dest_vm_name,
+               cust_spec_name = nil,
+               dest_ip_address = nil,
+               vcenter = nil )
+
+      # create empty clone_spec, then populate properties below
+      clone_spec = VIM.VirtualMachineCloneSpec
+      # power on new vm after clone?
+      clone_spec.powerOn = false
+      # create new vm as a template?
+      clone_spec.template = false
+      # set default location for clone_spec
+      clone_spec.location = VIM.VirtualMachineRelocateSpec
+
+      if cust_spec_name
+        dest_ip_address.nil? and fail "err: customization specified but no IP specified"
+        vcenter.nil? and fail "err: vcenter handle required when customization specified"
+        # get the actual customization spec object by name from vcenter
+        spec_mgr = vcenter.mob.serviceContent.customizationSpecManager
+        clone_spec.customization = spec_mgr.GetCustomizationSpec(:name => cust_spec_name).spec or fail "err: couldn't find customization spec #{cust_spec_name}"
+        clone_spec.customization.nicSettingMap.first.adapter.ip.ipAddress = dest_ip_address
+      end
+
+      # vm = vc.get_vm_by_path('source_vm_path') <-- isn't working, falling back to rbvmomi method
+      # vm_mob = vc.mob.searchIndex.FindByInventoryPath(:inventoryPath => source_vm_path)
+      @mob.CloneVM_Task(:folder => @mob.parent, :name => dest_vm_name, :spec => clone_spec).wait_for_completion
+
     end
 
     private
